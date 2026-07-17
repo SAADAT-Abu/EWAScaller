@@ -28,8 +28,8 @@ genomic location enrichment on a probe set.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/saadatabu/EWAScaller}
-  \item Report bugs at \url{https://github.com/saadatabu/EWAScaller/issues}
+  \item \url{https://github.com/SAADAT-Abu/EWAScaller}
+  \item Report bugs at \url{https://github.com/SAADAT-Abu/EWAScaller/issues}
 }
 
 }
