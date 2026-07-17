@@ -1,0 +1,94 @@
+---
+title: "Getting started with EWAScaller"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with EWAScaller}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+EWAScaller queries the [EWAS Atlas](https://ngdc.cncb.ac.cn/ewas/) database
+for epigenome-wide association study results, and runs enrichment analyses
+on CpG probe sets. Because every example below contacts a remote web
+service, the code in this vignette is shown but not executed when the
+package documentation is built; run it interactively to see live results.
+
+```{r setup}
+library(EWAScaller)
+```
+
+## Querying by CpG probe
+
+```{r}
+res <- query_cpg(c("cg05575921", "cg11903855", "cg00240195"), workers = 2, delay = 1)
+res
+summary(res)
+head(res$associations)
+head(res$probes)
+```
+
+`query_cpg()`, `query_gene()`, and `query_region()` all return an
+`ewas_result` object with the same shape: an `associations` table (one row
+per probe-trait association), a `probes` table (one row per unique probe),
+and a `failed` table listing any input terms that could not be resolved.
+
+## Querying by gene or genomic region
+
+```{r}
+gene_res <- query_gene(c("AHRR", "F2RL3"))
+region_res <- query_region(chr = "5", start = 373000, end = 374000)
+```
+
+Multiple regions can be supplied at once via a data frame:
+
+```{r}
+regions <- data.frame(chr = c("5", "1"), start = c(373000, 1), end = c(374000, 100000))
+query_region(regions)
+```
+
+## Enrichment analysis
+
+`ewas_enrichment()` submits a probe set (20-5000 probes) to the EWAS Atlas
+toolkit and retrieves enrichment results against a chosen background
+(`"450K"`, `"850K"`, or a custom probe list).
+
+```{r}
+data(example_cpgs)
+probes <- unique(example_cpgs$query_cpg)
+
+enr <- ewas_enrichment(
+  probes,
+  background = "850K",
+  types = c("trait", "genomic_location", "gene_ontology", "kegg")
+)
+enr
+summary(enr)
+top_traits(enr)
+```
+
+## Plots
+
+```{r}
+plot_wordcloud(res)
+plot_wordcloud(enr, type = "trait")
+
+autoplot(res, type = "traits")
+autoplot(res, type = "chromosome")
+autoplot(res, type = "direction")
+autoplot(enr, type = "trait")
+autoplot(enr, type = "kegg")
+```
+
+## Rate limiting
+
+Query functions dispatch up to `workers` requests concurrently and pause
+`delay` seconds between batches. Increase `workers` for faster throughput on
+large probe lists, or increase `delay` to be gentler on the remote service.
