@@ -23,6 +23,14 @@
 
 \item{type}{Which analysis result to extract (default \code{"trait"}).}
 }
+\value{
+An object of class \code{ewas_enrichment}: a named list with the
+\code{results}, \code{job}, \code{probes}, \code{background}, and \code{failed} elements
+described above. \code{summary.ewas_enrichment()} invisibly returns the
+object it was called on (after printing a summary), and
+\code{as.data.frame.ewas_enrichment()} returns the requested analysis's
+result data frame on its own.
+}
 \description{
 An \code{ewas_enrichment} bundles the analyses run by \code{\link[=ewas_enrichment]{ewas_enrichment()}}.
 }

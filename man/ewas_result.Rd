@@ -10,6 +10,12 @@
 \arguments{
 \item{row.names, optional}{Passed on for S3 consistency; unused.}
 }
+\value{
+An object of class \code{ewas_result}: a named list with the
+\code{associations}, \code{probes}, \code{failed}, \code{query_type}, and \code{n_queries}
+elements described above. \code{as.data.frame.ewas_result()} returns the
+\code{associations} data frame on its own.
+}
 \description{
 An \code{ewas_result} bundles the tables returned by \code{\link[=query_cpg]{query_cpg()}},
 \code{\link[=query_gene]{query_gene()}}, or \code{\link[=query_region]{query_region()}}.

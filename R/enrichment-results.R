@@ -14,6 +14,12 @@
 #'     retrieved, with an explanatory message.}
 #' }
 #'
+#' @return An object of class `ewas_enrichment`: a named list with the
+#'   `results`, `job`, `probes`, `background`, and `failed` elements
+#'   described above. `summary.ewas_enrichment()` invisibly returns the
+#'   object it was called on (after printing a summary), and
+#'   `as.data.frame.ewas_enrichment()` returns the requested analysis's
+#'   result data frame on its own.
 #' @name ewas_enrichment-class
 #' @keywords internal
 NULL

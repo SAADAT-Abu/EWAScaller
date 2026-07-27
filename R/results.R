@@ -16,6 +16,10 @@
 #'   \item{n_queries}{Number of input terms submitted.}
 #' }
 #'
+#' @return An object of class `ewas_result`: a named list with the
+#'   `associations`, `probes`, `failed`, `query_type`, and `n_queries`
+#'   elements described above. `as.data.frame.ewas_result()` returns the
+#'   `associations` data frame on its own.
 #' @name ewas_result
 #' @keywords internal
 NULL
