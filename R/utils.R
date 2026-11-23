@@ -1,6 +1,6 @@
 .ewas_rest_base <- "https://ngdc.cncb.ac.cn/ewas/rest"
 .ewas_toolkit_base <- "https://ngdc.cncb.ac.cn/ewas/toolkit"
-.ewas_user_agent <- "EWAScaller (https://github.com/saadatabu/EWAScaller)"
+.ewas_user_agent <- "EWAScaller (https://github.com/SAADAT-Abu/EWAScaller)"
 
 #' Perform a GET request against the EWAS Atlas REST API
 #'
@@ -162,7 +162,7 @@
     out[idx] <- res
     done <- done + length(idx)
     report(done)
-    if (delay > 0) Sys.sleep(delay)
+    if (done < n && delay > 0) Sys.sleep(delay)
   }
   out
 }

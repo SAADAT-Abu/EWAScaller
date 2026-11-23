@@ -63,6 +63,9 @@ ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "tra
 
   types <- match.arg(types, choices = names(.enrichment_files), several.ok = TRUE)
 
+  # An untouched default means "use the first preset" (450K), not a custom set.
+  if (identical(background, c("450K", "850K"))) background <- "450K"
+
   if (length(background) > 1 || !background[1] %in% c("450K", "850K")) {
     custom <- unique(as.character(background))
     custom <- custom[!is.na(custom) & nzchar(custom)]
@@ -100,9 +103,9 @@ ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "tra
       failed[[type]] <- "could not start analysis"
       next
     }
-    ok <- .poll_job_status(job, type, poll_interval = poll_interval, timeout = timeout, progress = progress)
-    if (!ok) {
-      failed[[type]] <- "timed out waiting for results"
+    status <- .poll_job_status(job, type, poll_interval = poll_interval, timeout = timeout, progress = progress)
+    if (!isTRUE(status)) {
+      failed[[type]] <- status
       next
     }
     file <- .ewas_post("/getFile", list(file = .enrichment_files[[type]], job = job), as = "json")
@@ -130,15 +133,30 @@ ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "tra
   deadline <- Sys.time() + timeout
   repeat {
     status <- .ewas_post("/jobStatus", list(job = job, type = type))
-    if (isTRUE(status$ok) && identical(trimws(status$value), "finished")) return(TRUE)
-    if (Sys.time() > deadline) return(FALSE)
+    if (isTRUE(status$ok)) {
+      value <- trimws(status$value)
+      if (identical(value, "finished")) return(TRUE)
+      # Stop early if the server reports the job failed rather than
+      # waiting out the full timeout.
+      if (grepl("error|fail", value, ignore.case = TRUE)) {
+        return(sprintf("analysis failed on the server: %s", value))
+      }
+    }
+    if (Sys.time() > deadline) return("timed out waiting for results")
     Sys.sleep(poll_interval)
   }
 }
 
 #' @keywords internal
 #' @noRd
-.now_string <- function() format(Sys.time(), "%a %b %d %Y %H:%M:%S GMT+0000 (Coordinated Universal Time)")
+.now_string <- function() {
+  # Mimic a browser's Date.toString() in UTC, with English day/month names
+  # regardless of the user's locale.
+  old <- Sys.getlocale("LC_TIME")
+  on.exit(invisible(suppressWarnings(Sys.setlocale("LC_TIME", old))), add = TRUE)
+  invisible(suppressWarnings(Sys.setlocale("LC_TIME", "C")))
+  format(Sys.time(), "%a %b %d %Y %H:%M:%S GMT+0000 (Coordinated Universal Time)", tz = "UTC")
+}
 
 #' @keywords internal
 #' @noRd

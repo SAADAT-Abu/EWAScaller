@@ -130,6 +130,9 @@ query_region <- function(chr, start = NULL, end = NULL, workers = 2L, delay = 1,
   df$chr <- gsub("^chr", "", as.character(df$chr), ignore.case = TRUE)
   df$start <- as.integer(df$start)
   df$end <- as.integer(df$end)
+  if (anyNA(df$chr) || anyNA(df$start) || anyNA(df$end) || any(!nzchar(df$chr))) {
+    stop("`chr`, `start`, and `end` must not be missing.", call. = FALSE)
+  }
   if (any(df$end < df$start)) stop("`end` must be greater than or equal to `start` for every region.", call. = FALSE)
 
   regions <- lapply(split(df, seq_len(nrow(df))), as.list)

@@ -18,13 +18,14 @@ plot_wordcloud <- function(x, max_words = 75L, colors = NULL, ...) UseMethod("pl
   if (is.null(colors)) {
     colors <- c("#264653", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51")
   }
-  set.seed(seed)
+  # Assign colours deterministically and pass the seed to the geom so the
+  # layout is reproducible without touching the user's global RNG state.
   df <- data.frame(word = words, weight = weights, stringsAsFactors = FALSE)
-  df$color <- sample(colors, nrow(df), replace = TRUE)
+  df$color <- rep_len(colors, nrow(df))
   ggplot2::ggplot(df, ggplot2::aes(
     label = .data$word, size = .data$weight, color = .data$color
   )) +
-    ggwordcloud::geom_text_wordcloud_area(rm_outside = TRUE) +
+    ggwordcloud::geom_text_wordcloud_area(rm_outside = TRUE, seed = seed) +
     ggplot2::scale_size_area(max_size = 16) +
     ggplot2::scale_color_identity() +
     ggplot2::theme_minimal() +

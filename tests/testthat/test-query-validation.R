@@ -20,6 +20,11 @@ test_that("query_region requires start/end or a data frame", {
     query_region(data.frame(chr = "1", start = 100, end = 50)),
     "greater than or equal to"
   )
+  expect_error(query_region("1", start = NA, end = 50), "must not be missing")
+  expect_error(
+    query_region(data.frame(chr = NA, start = 1, end = 50)),
+    "must not be missing"
+  )
 })
 
 test_that("ewas_enrichment enforces probe-count bounds", {

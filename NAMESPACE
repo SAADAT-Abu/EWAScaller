@@ -19,8 +19,12 @@ export(query_cpg)
 export(query_gene)
 export(query_region)
 export(top_traits)
-importFrom(ggplot2,.data)
-importFrom(ggplot2,autoplot)
-importFrom(stats,reorder)
-importFrom(stats,setNames)
+importFrom(ggplot2,
+  .data,
+  autoplot
+)
+importFrom(stats,
+  reorder,
+  setNames
+)
 importFrom(utils,head)

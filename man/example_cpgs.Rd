@@ -19,8 +19,9 @@ example_cpgs
 }
 \description{
 A small example dataset of Illumina CpG probe identifiers, useful for
-trying out \code{\link[=query_cpg]{query_cpg()}} and \code{\link[=ewas_enrichment]{ewas_enrichment()}} without needing to
-supply your own probe list.
+trying out \code{\link[=query_cpg]{query_cpg()}} without needing to supply your own probe list.
+It contains only 3 distinct probes (with repeats), so it is too small
+for \code{\link[=ewas_enrichment]{ewas_enrichment()}}, which requires 20-5000 distinct probes.
 }
 \examples{
 data(example_cpgs)

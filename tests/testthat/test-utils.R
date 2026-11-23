@@ -29,6 +29,21 @@ test_that(".run_parallel preserves input order sequentially and in parallel", {
   expect_equal(unlist(out_par), c(2, 4, 6, 8, 10))
 })
 
+test_that(".now_string uses English names and UTC whatever the locale", {
+  old <- Sys.getlocale("LC_TIME")
+  on.exit(Sys.setlocale("LC_TIME", old), add = TRUE)
+  s <- EWAScaller:::.now_string()
+  expect_match(s, "^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \\d{2} \\d{4} \\d{2}:\\d{2}:\\d{2} GMT\\+0000")
+  expect_identical(Sys.getlocale("LC_TIME"), old)
+})
+
+test_that(".run_parallel does not sleep after the final batch", {
+  elapsed <- system.time(
+    EWAScaller:::.run_parallel(as.list(1:2), identity, workers = 2, delay = 3, progress = FALSE)
+  )[["elapsed"]]
+  expect_lt(elapsed, 3)
+})
+
 test_that(".coerce_numeric_cols only converts fully-numeric character columns", {
   df <- data.frame(
     p = c("0.01", "0.02"),

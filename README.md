@@ -31,8 +31,13 @@ can be resolved faster without overwhelming the remote service.
 ### Enrichment analysis
 
 ```r
-data(example_cpgs)
-probes <- unique(example_cpgs$query_cpg)
+# enrichment needs 20-5000 distinct probes
+probes <- c(
+  "cg05575921", "cg00240195", "cg16419584", "cg11903855", "cg21566642",
+  "cg23771366", "cg19859270", "cg00382138", "cg25648203", "cg01940273",
+  "cg23576855", "cg00401753", "cg00300637", "cg12803068", "cg09935388",
+  "cg01899089", "cg04180046", "cg00050873", "cg02228185", "cg18147296"
+)
 
 enr <- ewas_enrichment(probes, background = "850K",
                         types = c("trait", "genomic_location", "gene_ontology", "kegg"))
