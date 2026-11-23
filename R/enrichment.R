@@ -16,9 +16,16 @@
 #' and computes results asynchronously; this function submits the job and
 #' polls for completion.
 #'
-#' @param probes Character vector of CpG probe identifiers (20-5000).
-#' @param background One of `"450K"`, `"850K"`, or a character vector of
-#'   probe identifiers to use as a custom background set.
+#' @param probes Character vector of probe identifiers (20-5000) from the
+#'   450K, EPIC (850K), or EPIC v2 array. EPIC v2 names such as
+#'   `"cg05575921_BC21"` are converted to their 450K/EPIC v1 names, and
+#'   replicate probes are merged.
+#' @param background The array the probes were selected from: `"450K"`
+#'   (the default), `"850K"` (EPIC v1), `"EPICv2"`, or a character vector of
+#'   probe identifiers to use as a custom background set. EWAS Atlas has no
+#'   EPIC v2 background, so `"EPICv2"` uses the EPIC/850K background; this
+#'   is an approximation because that background also contains EPIC v1
+#'   probes that are not on EPIC v2.
 #' @param types Character vector of analyses to run: any of `"trait"`
 #'   (EWAS Atlas trait-term enrichment), `"genomic_location"` (enrichment
 #'   across gene/CpG-island-relative locations), `"gene_ontology"` (GO term
@@ -45,7 +52,35 @@
 #' @export
 ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "trait",
                              poll_interval = 5, timeout = 300, progress = interactive()) {
-  probes <- unique(as.character(probes))
+  probes <- .prepare_toolkit_probes(probes)
+  types <- match.arg(types, choices = names(.enrichment_files), several.ok = TRUE)
+  bk <- .resolve_background(background)
+  job <- .submit_toolkit_job(probes, bk$string)
+
+  results <- list()
+  failed <- list()
+  for (type in types) {
+    if (isTRUE(progress)) message(sprintf("EWAScaller: running '%s' enrichment...", type))
+    out <- .run_toolkit_analysis(job, type, .enrichment_files[[type]],
+                                 poll_interval = poll_interval, timeout = timeout, progress = progress)
+    if (!isTRUE(out$ok)) {
+      failed[[type]] <- out$message
+    } else {
+      results[[type]] <- out$data
+    }
+  }
+
+  new_ewas_enrichment(
+    results = results, job = job, probes = probes,
+    background = bk$label, failed = failed
+  )
+}
+
+#' Validate a probe set for submission to the EWAS Atlas toolkit
+#' @keywords internal
+#' @noRd
+.prepare_toolkit_probes <- function(probes) {
+  probes <- unique(.normalize_probe_ids(probes))
   probes <- probes[!is.na(probes) & nzchar(probes)]
   invalid <- probes[!.is_valid_probe_id(probes)]
   if (length(invalid) > 0) {
@@ -55,32 +90,44 @@ ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "tra
     probes <- setdiff(probes, invalid)
   }
   if (length(probes) < 20) {
-    stop("EWAS Atlas enrichment requires at least 20 valid probe identifiers.", call. = FALSE)
+    stop("The EWAS Atlas toolkit requires at least 20 valid probe identifiers.", call. = FALSE)
   }
   if (length(probes) > 5000) {
-    stop("EWAS Atlas enrichment accepts at most 5000 probe identifiers.", call. = FALSE)
+    stop("The EWAS Atlas toolkit accepts at most 5000 probe identifiers.", call. = FALSE)
   }
+  probes
+}
 
-  types <- match.arg(types, choices = names(.enrichment_files), several.ok = TRUE)
-
+#' Turn a `background` argument into the toolkit's string and a label
+#' @keywords internal
+#' @noRd
+.resolve_background <- function(background) {
   # An untouched default means "use the first preset" (450K), not a custom set.
   if (identical(background, c("450K", "850K"))) background <- "450K"
-
+  if (length(background) == 1L && toupper(background) %in% c("EPICV2", "EPIC_V2", "935K")) {
+    message(
+      "EWAScaller: EWAS Atlas has no EPIC v2 background, so the EPIC/850K ",
+      "background is used instead. It includes EPIC v1 probes that are not on ",
+      "EPIC v2, so p-values are approximate."
+    )
+    return(list(string = "850K", label = "EPICv2 (approximated by 850K)"))
+  }
   if (length(background) > 1 || !background[1] %in% c("450K", "850K")) {
-    custom <- unique(as.character(background))
+    custom <- unique(.normalize_probe_ids(background, verbose = FALSE))
     custom <- custom[!is.na(custom) & nzchar(custom)]
     if (length(custom) < 20) {
       stop("A custom `background` must contain at least 20 probe identifiers.", call. = FALSE)
     }
-    bk_string <- paste(custom, collapse = "\n")
-    bk_label <- "other"
-  } else {
-    bk_string <- background[1]
-    bk_label <- background[1]
+    return(list(string = paste(custom, collapse = "\n"), label = "other"))
   }
+  list(string = background[1], label = background[1])
+}
 
+#' Register a probe set with the toolkit (if not already known) and return the job id
+#' @keywords internal
+#' @noRd
+.submit_toolkit_job <- function(probes, bk_string) {
   job <- .ewas_job_id(probes, bk_string)
-
   exist <- .ewas_post("/checkJob", list(job = job, date = .now_string()))
   if (!isTRUE(exist$ok)) stop("Could not reach the EWAS Atlas toolkit service.", call. = FALSE)
 
@@ -93,38 +140,27 @@ ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "tra
       stop(sprintf("EWAS Atlas rejected the input: %s", trimws(check$value)), call. = FALSE)
     }
   }
+  job
+}
 
-  results <- list()
-  failed <- list()
-  for (type in types) {
-    if (isTRUE(progress)) message(sprintf("EWAScaller: running '%s' enrichment...", type))
-    trigger <- .ewas_post("/analysis", list(job = job, type = type))
-    if (!isTRUE(trigger$ok)) {
-      failed[[type]] <- "could not start analysis"
-      next
-    }
-    status <- .poll_job_status(job, type, poll_interval = poll_interval, timeout = timeout, progress = progress)
-    if (!isTRUE(status)) {
-      failed[[type]] <- status
-      next
-    }
-    file <- .ewas_post("/getFile", list(file = .enrichment_files[[type]], job = job), as = "json")
-    if (!isTRUE(file$ok) || is.null(file$value) || !identical(file$value$code, 0L)) {
-      failed[[type]] <- "could not retrieve results"
-      next
-    }
-    df <- file$value$data
-    if (is.null(df) || (is.data.frame(df) && nrow(df) == 0)) {
-      results[[type]] <- data.frame()
-    } else {
-      results[[type]] <- .coerce_numeric_cols(as.data.frame(df, stringsAsFactors = FALSE))
-    }
+#' Trigger one toolkit analysis, wait for it, and download its result table
+#' @return `list(ok = TRUE, data = <data.frame>)` or `list(ok = FALSE, message = <chr>)`.
+#' @keywords internal
+#' @noRd
+.run_toolkit_analysis <- function(job, type, file, poll_interval, timeout, progress) {
+  trigger <- .ewas_post("/analysis", list(job = job, type = type))
+  if (!isTRUE(trigger$ok)) return(list(ok = FALSE, message = "could not start analysis"))
+  status <- .poll_job_status(job, type, poll_interval = poll_interval, timeout = timeout, progress = progress)
+  if (!isTRUE(status)) return(list(ok = FALSE, message = status))
+  res <- .ewas_post("/getFile", list(file = file, job = job), as = "json")
+  if (!isTRUE(res$ok) || is.null(res$value) || !identical(res$value$code, 0L)) {
+    return(list(ok = FALSE, message = "could not retrieve results"))
   }
-
-  new_ewas_enrichment(
-    results = results, job = job, probes = probes,
-    background = bk_label, failed = failed
-  )
+  df <- res$value$data
+  if (is.null(df) || (is.data.frame(df) && nrow(df) == 0)) {
+    return(list(ok = TRUE, data = data.frame()))
+  }
+  list(ok = TRUE, data = .coerce_numeric_cols(as.data.frame(df, stringsAsFactors = FALSE)))
 }
 
 #' @keywords internal

@@ -1,6 +1,9 @@
 # EWAScaller
 
-EWAScaller is an R client for the [EWAS Atlas](https://ngdc.cncb.ac.cn/ewas/) database. It queries CpG probes, gene symbols, and genomic regions for epigenome-wide association study (EWAS) results, runs trait/GO/KEGG/genomic-location enrichment analyses on probe sets, and provides plotting helpers including word clouds of enriched trait terms.
+EWAScaller is an R client for the [EWAS Atlas](https://ngdc.cncb.ac.cn/ewas/) database. It queries CpG probes, gene symbols, and genomic regions for epigenome-wide association study (EWAS) results, runs trait/GO/KEGG/genomic-location enrichment analyses on probe sets, finds expression quantitative trait methylation (eQTM) pairs, and provides customisable plots including word clouds of enriched trait terms.
+
+Supported arrays: Illumina 450K, EPIC (850K), and EPIC v2, including
+non-CpG `ch.*` probes.
 
 ## Installation
 
@@ -45,17 +48,86 @@ summary(enr)
 top_traits(enr)
 ```
 
+Which background matters depends on the analysis: in our tests, trait
+enrichment gave identical results with the 450K and 850K backgrounds,
+while genomic location, Gene Ontology, and KEGG results changed.
+
+### EPIC v2 arrays
+
+EPIC v2 probe names such as `cg05575921_BC21` are accepted everywhere and
+converted to the 450K/EPIC v1 names EWAS Atlas uses (replicate probes are
+merged). For enrichment and eQTM, use `background = "EPICv2"`:
+
+```r
+enr <- ewas_enrichment(my_epicv2_probes, background = "EPICv2")
+```
+
+Things to know:
+
+- EWAS Atlas has no EPIC v2 background, so `"EPICv2"` uses the EPIC/850K
+  background. That background also contains EPIC v1 probes that are not on
+  EPIC v2, so genomic location, GO, and KEGG p-values are approximate
+  (trait enrichment is unaffected).
+- Probes that are only on EPIC v2 (about 200,000 of them) have no EWAS
+  Atlas data. The toolkit rejects a whole enrichment or eQTM job if the
+  probe list contains one, with an error naming it (e.g.
+  `cg06161738 not in 850K`); remove those probes and resubmit.
+
+### eQTM: CpG methylation vs gene expression
+
+`ewas_eqtm()` finds expression quantitative trait methylation (eQTM)
+pairs: CpG-gene pairs whose methylation correlates with gene expression.
+The correlations were computed by EWAS Atlas from matched methylation and
+RNA-seq data in The Cancer Genome Atlas (TCGA), i.e. tumour tissue, for
+six tissues (brain, colon, kidney, liver, stomach, testis). Keep that in
+mind when interpreting results for blood or healthy tissue. It takes the
+same 20-5000 probe set as `ewas_enrichment()`.
+
+```r
+eq <- ewas_eqtm(probes, background = "850K")
+summary(eq)
+head(eq$pairs)
+
+# per-sample methylation and expression behind one pair
+eqtm_samples("cg05575921", "ENSG00000063438", "brain")
+```
+
 ### Plots
 
 ```r
 plot_wordcloud(cpg_res)
 plot_wordcloud(enr, type = "trait")
+plot_wordcloud(eq)
 
 autoplot(cpg_res, type = "traits")
 autoplot(cpg_res, type = "chromosome")
 autoplot(cpg_res, type = "direction")
 autoplot(enr, type = "trait")
+autoplot(enr, type = "kegg", style = "bar")
+
+autoplot(eq, type = "heatmap")   # probes x genes, coloured by correlation
+autoplot(eq, type = "volcano")   # correlation vs -log10(p)
+autoplot(eq, type = "tissue")    # pairs per tissue
+autoplot(eq, type = "scatter", probe = "cg05575921", gene = "AHRR", tissue = "brain")
 ```
+
+Every plot accepts the same customisation arguments and returns a regular
+`ggplot` object, so you can keep adding layers with `+`:
+
+```r
+autoplot(enr,
+  colors = "#6d597a",              # colours (meaning depends on the plot)
+  title = "Smoking-related CpGs",  # NA removes the title
+  subtitle = "850K background",
+  theme = ggplot2::theme_bw,       # any theme function or theme object
+  base_size = 14,                  # font size
+  wrap = 30                        # wrap long labels at 30 characters
+)
+```
+
+Word clouds take `title`, `subtitle`, `base_size`, `theme`, `max_size`
+(largest font; scaled automatically when there are few words), and `seed`
+(layout seed).
 
 ## Data source
 

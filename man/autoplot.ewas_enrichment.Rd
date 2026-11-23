@@ -4,7 +4,19 @@
 \alias{autoplot.ewas_enrichment}
 \title{Plot an EWAS Atlas enrichment result}
 \usage{
-\method{autoplot}{ewas_enrichment}(object, type = "trait", top_n = 20L, ...)
+\method{autoplot}{ewas_enrichment}(
+  object,
+  type = "trait",
+  top_n = 20L,
+  style = c("dot", "bar"),
+  colors = NULL,
+  title = NULL,
+  subtitle = NULL,
+  base_size = 11,
+  theme = ggplot2::theme_minimal,
+  wrap = 40,
+  ...
+)
 }
 \arguments{
 \item{object}{An \link{ewas_enrichment} object.}
@@ -13,13 +25,29 @@
 
 \item{top_n}{Number of top terms to display.}
 
+\item{style}{\code{"dot"} (default) or \code{"bar"}.}
+
+\item{colors}{Colour of the points or bars (first element used).}
+
+\item{title, subtitle}{Plot title and subtitle. \code{NULL} (default) uses the
+built-in title; \code{NA} or \code{""} removes it.}
+
+\item{base_size}{Base font size passed to \code{theme}.}
+
+\item{theme}{A ggplot2 theme function such as \code{\link[ggplot2:theme_bw]{ggplot2::theme_bw()}}
+(called with \code{base_size}), or a complete theme object.}
+
+\item{wrap}{Wrap long category labels at this many characters; \code{NULL}
+to disable wrapping.}
+
 \item{...}{Unused.}
 }
 \value{
 A \code{ggplot} object.
 }
 \description{
-Draws a dot plot of enrichment significance, mirroring the EWAS Atlas
-toolkit's trait-enrichment chart: one row per term, position given by
-\code{-log10(p)} and point size by the differentially-methylated CpG count.
+Draws the top enriched terms of one analysis, either as a dot plot
+(mirroring the EWAS Atlas toolkit chart: position given by \code{-log10(p)},
+point size by the differentially-methylated CpG/gene count) or as a bar
+chart of \code{-log10(p)}.
 }

@@ -20,8 +20,12 @@ helpers, including trait-term word clouds.
 probe-trait associations from the EWAS Atlas.
 \item \code{\link[=ewas_enrichment]{ewas_enrichment()}} -- run trait, gene ontology, KEGG pathway, or
 genomic location enrichment on a probe set.
+\item \code{\link[=ewas_eqtm]{ewas_eqtm()}}, \code{\link[=eqtm_samples]{eqtm_samples()}} -- find CpG-gene expression
+quantitative trait methylation (eQTM) pairs and their per-sample
+data.
 \item \code{\link[=plot_wordcloud]{plot_wordcloud()}}, \code{\link[=autoplot.ewas_result]{autoplot.ewas_result()}},
-\code{\link[=autoplot.ewas_enrichment]{autoplot.ewas_enrichment()}} -- visualise results.
+\code{\link[=autoplot.ewas_enrichment]{autoplot.ewas_enrichment()}}, \code{\link[=autoplot.ewas_eqtm]{autoplot.ewas_eqtm()}} -- visualise
+results.
 }
 }
 

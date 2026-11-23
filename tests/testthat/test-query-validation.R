@@ -28,11 +28,11 @@ test_that("query_region requires start/end or a data frame", {
 })
 
 test_that("ewas_enrichment enforces probe-count bounds", {
-  expect_error(ewas_enrichment(paste0("cg", 1:5)), "at least 20")
+  expect_error(ewas_enrichment(paste0("cg", 1:5)), "at least 20 valid")
   expect_error(ewas_enrichment(paste0("cg", seq_len(5001))), "at most 5000")
 })
 
 test_that("ewas_enrichment validates custom background size", {
   probes <- sprintf("cg%08d", seq_len(25))
-  expect_error(ewas_enrichment(probes, background = c("cg00000001", "cg00000002")), "at least 20")
+  expect_error(ewas_enrichment(probes, background = c("cg00000001", "cg00000002")), "at least 20 probe")
 })

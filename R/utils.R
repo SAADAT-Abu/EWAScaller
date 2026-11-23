@@ -66,6 +66,37 @@
   list(ok = TRUE, value = txt, raw = txt)
 }
 
+#' Perform a GET request against the EWAS Atlas toolkit and parse the JSON body
+#'
+#' Unlike the REST API, toolkit GET endpoints return bare JSON without a
+#' `{code, msg, data}` envelope.
+#'
+#' @inheritParams .ewas_get
+#' @keywords internal
+#' @noRd
+.ewas_toolkit_get <- function(path, query = list(), times = 3L) {
+  resp <- tryCatch(
+    httr::RETRY(
+      "GET", paste0(.ewas_toolkit_base, path),
+      query = query,
+      httr::user_agent(.ewas_user_agent),
+      times = times,
+      pause_base = 1,
+      pause_cap = 8,
+      terminate_on = c(400, 401, 403, 404),
+      quiet = TRUE
+    ),
+    error = function(e) e
+  )
+  if (inherits(resp, "error")) return(list(ok = FALSE, message = conditionMessage(resp)))
+  status <- httr::status_code(resp)
+  if (status >= 400) return(list(ok = FALSE, message = paste("HTTP", status)))
+  txt <- httr::content(resp, as = "text", encoding = "UTF-8")
+  parsed <- tryCatch(jsonlite::fromJSON(txt, simplifyVector = TRUE), error = function(e) NULL)
+  if (is.null(parsed)) return(list(ok = FALSE, message = "Could not parse API response"))
+  list(ok = TRUE, value = parsed)
+}
+
 #' @keywords internal
 #' @noRd
 .parse_ewas_response <- function(resp, context = NULL) {
@@ -103,12 +134,46 @@
 #' Validate CpG probe identifiers
 #'
 #' @param x Character vector of probe identifiers.
-#' @return Logical vector, `TRUE` where `x` matches the Illumina probe ID
-#'   pattern (e.g. `"cg05575921"`).
+#' @return Logical vector, `TRUE` where `x` matches an Illumina 450K/EPIC
+#'   probe ID pattern: CpG probes (`"cg05575921"`), non-CpG probes
+#'   (`"ch.4.37949012R"`), or SNP probes (`"rs123456"`).
 #' @keywords internal
 #' @noRd
 .is_valid_probe_id <- function(x) {
-  grepl("^(cg|ch|rs)[0-9]+$", x, ignore.case = TRUE)
+  grepl("^(cg[0-9]+|ch\\.([0-9]{1,2}|X|Y)\\.[0-9]+[FR]?|rs[0-9]+)$", x, ignore.case = TRUE)
+}
+
+# EPIC v2 probe names add a suffix to the 450K/EPIC v1 name, e.g.
+# "cg05575921_BC21": strand (T/B), design (C/O), and a replicate number.
+.epicv2_suffix <- "_(BC|TC|BO|TO)[0-9]+$"
+
+#' Convert EPIC v2 probe IDs to their 450K/EPIC v1 names
+#'
+#' EWAS Atlas only knows 450K/EPIC v1 names, so `"cg05575921_BC21"` becomes
+#' `"cg05575921"`. Replicate EPIC v2 probes therefore collapse to the same
+#' name; callers de-duplicate afterwards.
+#'
+#' @param x Character vector of probe identifiers.
+#' @param verbose Print a message when any IDs were converted.
+#' @return `x` with EPIC v2 suffixes removed.
+#' @keywords internal
+#' @noRd
+.normalize_probe_ids <- function(x, verbose = TRUE) {
+  x <- as.character(x)
+  is_v2 <- !is.na(x) & grepl(.epicv2_suffix, x, ignore.case = TRUE)
+  if (any(is_v2)) {
+    stripped <- sub(.epicv2_suffix, "", x[is_v2], ignore.case = TRUE)
+    if (isTRUE(verbose)) {
+      n_merged <- sum(is_v2) - length(unique(stripped))
+      message(sprintf(
+        "EWAScaller: converted %d EPIC v2 probe ID(s) to 450K/EPIC v1 names (e.g. %s -> %s)%s.",
+        sum(is_v2), x[is_v2][1], stripped[1],
+        if (n_merged > 0) sprintf("; %d replicate probe(s) merged", n_merged) else ""
+      ))
+    }
+    x[is_v2] <- stripped
+  }
+  x
 }
 
 #' Dispatch a function over a vector of items with bounded concurrency

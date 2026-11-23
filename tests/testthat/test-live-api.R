@@ -50,3 +50,21 @@ test_that("ewas_enrichment runs trait enrichment end to end", {
   expect_true(nrow(enr$results$trait) > 0)
   expect_true(all(c("trait", "p", "OR", "DMC") %in% names(enr$results$trait)))
 })
+
+test_that("ewas_eqtm and eqtm_samples return live CpG-gene expression data", {
+  skip_if_offline()
+  probes <- c(
+    "cg05575921", "cg00240195", "cg16419584", "cg11903855", "cg21566642",
+    "cg23771366", "cg19859270", "cg00382138", "cg25648203", "cg01940273",
+    "cg23576855", "cg00401753", "cg00300637", "cg12803068", "cg09935388",
+    "cg01899089", "cg04180046", "cg00050873", "cg02228185", "cg18147296"
+  )
+  eq <- ewas_eqtm(probes, background = "850K", poll_interval = 3, timeout = 300, progress = FALSE)
+  expect_s3_class(eq, "ewas_eqtm")
+  expect_true(nrow(eq$pairs) > 0)
+  expect_type(eq$pairs$cor, "double")
+  first <- eq$pairs[1, ]
+  s <- eqtm_samples(first$probeId, first$gene_id, first$tissue)
+  expect_true(nrow(s) > 10)
+  expect_true(all(s$methylation >= 0 & s$methylation <= 1, na.rm = TRUE))
+})

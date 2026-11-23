@@ -79,18 +79,87 @@ summary(enr)
 top_traits(enr)
 ```
 
+## EPIC v2 arrays
+
+EWAS Atlas annotates probes by their 450K/EPIC v1 names. EPIC v2 names
+such as `cg05575921_BC21` are accepted by every function and converted to
+`cg05575921`; replicate EPIC v2 probes are merged into one. For enrichment
+and eQTM analyses, set `background = "EPICv2"`. EWAS Atlas has no EPIC v2
+background, so the EPIC/850K background is used instead; it also contains
+EPIC v1 probes that are not on EPIC v2, so p-values are approximate.
+Probes that are new on EPIC v2 have no EWAS Atlas data and cannot be
+looked up.
+
+```{r}
+v2_probes <- paste0(probes, "_BC21")
+enr_v2 <- ewas_enrichment(v2_probes, background = "EPICv2")
+```
+
+## eQTM: CpG methylation vs gene expression
+
+Expression quantitative trait methylation (eQTM) pairs link a CpG to a gene
+whose expression correlates with that CpG's methylation. `ewas_eqtm()` runs
+the EWAS Atlas toolkit's "Expression Regulation" analysis, which reports
+Pearson correlations computed from matched methylation and RNA-seq data in
+The Cancer Genome Atlas (TCGA), for several tissues. It takes the same
+20-5000 probe set as `ewas_enrichment()`, and reuses the toolkit job if the
+same probes were already submitted.
+
+```{r}
+eq <- ewas_eqtm(probes, background = "850K")
+eq
+summary(eq)
+head(eq$pairs)
+```
+
+Each row of `eq$pairs` is one CpG-gene-tissue correlation, with the gene's
+symbol and Ensembl identifier, the CpG's position relative to the gene,
+the correlation `cor`, its `p` value, the `tissue`, and the TCGA `source`.
+`eqtm_samples()` downloads the per-sample values behind one pair:
+
+```{r}
+eqtm_samples("cg05575921", "ENSG00000063438", "brain")
+```
+
 ## Plots
 
 ```{r}
 plot_wordcloud(res)
 plot_wordcloud(enr, type = "trait")
+plot_wordcloud(eq)
 
 autoplot(res, type = "traits")
 autoplot(res, type = "chromosome")
 autoplot(res, type = "direction")
 autoplot(enr, type = "trait")
-autoplot(enr, type = "kegg")
+autoplot(enr, type = "kegg", style = "bar")
+
+autoplot(eq, type = "heatmap")
+autoplot(eq, type = "volcano", label_top = 10)
+autoplot(eq, type = "tissue")
+autoplot(eq, type = "scatter", probe = "cg05575921", gene = "AHRR", tissue = "brain")
 ```
+
+### Customising plots
+
+All `autoplot()` methods share the arguments `colors`, `title`,
+`subtitle`, `base_size`, `theme`, and `wrap`, and `plot_wordcloud()`
+accepts `title`, `subtitle`, `base_size`, `theme`, `max_size`, and `seed`.
+`title = NULL` keeps the default title and `title = NA` removes it. `theme`
+takes any ggplot2 theme function (called with `base_size`) or a complete
+theme object. What `colors` means depends on the plot; see
+`?autoplot.ewas_eqtm` for the eQTM plots.
+
+```{r}
+autoplot(eq, type = "heatmap",
+         colors = c("navy", "white", "firebrick"),
+         title = "Smoking CpGs: eQTM", theme = ggplot2::theme_bw, base_size = 13)
+
+autoplot(enr, style = "bar", colors = "#6d597a", wrap = 25, title = NA)
+```
+
+Every plot is an ordinary `ggplot` object, so anything else can be added
+with `+`, e.g. `autoplot(eq, type = "volcano") + ggplot2::xlim(-1, 1)`.
 
 ## Rate limiting
 

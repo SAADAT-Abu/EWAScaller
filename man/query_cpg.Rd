@@ -7,8 +7,11 @@
 query_cpg(cpgs, workers = 2L, delay = 1, progress = interactive())
 }
 \arguments{
-\item{cpgs}{Character vector of CpG probe identifiers. Duplicates and
-missing values are dropped before querying.}
+\item{cpgs}{Character vector of probe identifiers from the 450K, EPIC
+(850K), or EPIC v2 array. EPIC v2 names such as \code{"cg05575921_BC21"} are
+converted to their 450K/EPIC v1 names (\code{"cg05575921"}), which is what
+EWAS Atlas uses. Duplicates and missing values are dropped before
+querying.}
 
 \item{workers}{Integer; maximum number of concurrent requests. Defaults
 to \code{2}, a conservative value intended to avoid overloading the remote

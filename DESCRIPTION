@@ -8,11 +8,15 @@ Description: Provides a client for the 'EWAS Atlas' web services
     association study (EWAS) data by CpG (cytosine-phosphate-guanine)
     probe identifier, gene symbol, or genomic region, and to run trait,
     Gene Ontology, KEGG (Kyoto Encyclopedia of Genes and Genomes) pathway,
-    and genomic location enrichment analyses on a set of CpG probes. Query
+    and genomic location enrichment analyses on a set of CpG probes. It
+    also retrieves expression quantitative trait methylation (eQTM)
+    associations, i.e. correlations between CpG methylation and gene
+    expression in 'TCGA' (The Cancer Genome Atlas) tissue data. Query
     functions support concurrent, rate-limited requests to the remote
     service. Results are returned as tidy data frames with dedicated
-    summary and plotting methods, including word clouds of enriched
-    'EWAS Atlas' trait terms.
+    summary and customisable plotting methods, including word clouds of
+    enriched 'EWAS Atlas' trait terms and eQTM heatmap, volcano, and
+    scatter plots.
 License: MIT + file LICENSE
 URL: https://github.com/SAADAT-Abu/EWAScaller
 BugReports: https://github.com/SAADAT-Abu/EWAScaller/issues

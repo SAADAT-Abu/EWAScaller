@@ -13,8 +13,12 @@
 #'     probe-trait associations from the EWAS Atlas.
 #'   \item [ewas_enrichment()] -- run trait, gene ontology, KEGG pathway, or
 #'     genomic location enrichment on a probe set.
+#'   \item [ewas_eqtm()], [eqtm_samples()] -- find CpG-gene expression
+#'     quantitative trait methylation (eQTM) pairs and their per-sample
+#'     data.
 #'   \item [plot_wordcloud()], [autoplot.ewas_result()],
-#'     [autoplot.ewas_enrichment()] -- visualise results.
+#'     [autoplot.ewas_enrichment()], [autoplot.ewas_eqtm()] -- visualise
+#'     results.
 #' }
 #'
 #' @keywords internal

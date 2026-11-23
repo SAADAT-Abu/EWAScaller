@@ -14,10 +14,17 @@ ewas_enrichment(
 )
 }
 \arguments{
-\item{probes}{Character vector of CpG probe identifiers (20-5000).}
+\item{probes}{Character vector of probe identifiers (20-5000) from the
+450K, EPIC (850K), or EPIC v2 array. EPIC v2 names such as
+\code{"cg05575921_BC21"} are converted to their 450K/EPIC v1 names, and
+replicate probes are merged.}
 
-\item{background}{One of \code{"450K"}, \code{"850K"}, or a character vector of
-probe identifiers to use as a custom background set.}
+\item{background}{The array the probes were selected from: \code{"450K"}
+(the default), \code{"850K"} (EPIC v1), \code{"EPICv2"}, or a character vector of
+probe identifiers to use as a custom background set. EWAS Atlas has no
+EPIC v2 background, so \code{"EPICv2"} uses the EPIC/850K background; this
+is an approximation because that background also contains EPIC v1
+probes that are not on EPIC v2.}
 
 \item{types}{Character vector of analyses to run: any of \code{"trait"}
 (EWAS Atlas trait-term enrichment), \code{"genomic_location"} (enrichment

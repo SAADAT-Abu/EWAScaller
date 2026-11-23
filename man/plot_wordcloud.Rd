@@ -4,7 +4,8 @@
 \alias{plot_wordcloud}
 \alias{plot_wordcloud.ewas_result}
 \alias{plot_wordcloud.ewas_enrichment}
-\title{Word cloud of EWAS Atlas trait terms}
+\alias{plot_wordcloud.ewas_eqtm}
+\title{Word cloud of EWAS Atlas terms}
 \usage{
 plot_wordcloud(x, max_words = 75L, colors = NULL, ...)
 
@@ -18,15 +19,21 @@ plot_wordcloud(x, max_words = 75L, colors = NULL, ...)
   weight = c("neglog10p", "count"),
   ...
 )
+
+\method{plot_wordcloud}{ewas_eqtm}(x, max_words = 75L, colors = NULL, ...)
 }
 \arguments{
-\item{x}{An \link{ewas_result} or \link{ewas_enrichment} object.}
+\item{x}{An \link{ewas_result}, \link{ewas_enrichment}, or \link[=ewas_eqtm-class]{ewas_eqtm}
+object.}
 
-\item{max_words}{Maximum number of trait terms to display.}
+\item{max_words}{Maximum number of terms to display.}
 
-\item{colors}{A vector of colors to cycle through.}
+\item{colors}{A vector of colours to cycle through.}
 
-\item{...}{Passed to methods.}
+\item{...}{Passed to methods. All methods also accept \code{title},
+\code{subtitle}, \code{base_size}, \code{theme} (see \code{\link[=autoplot.ewas_result]{autoplot.ewas_result()}}),
+\code{max_size} (largest font size; by default 16, scaled up to 40 when
+there are only a few words), and \code{seed} (word layout seed, default 1).}
 
 \item{type}{Which enrichment analysis to plot the word cloud for
 (default \code{"trait"}).}
@@ -38,6 +45,8 @@ or \code{"count"} (differentially methylated CpG/gene count for the term).}
 A \code{ggplot} object.
 }
 \description{
-Draws a word cloud sized by association frequency (for \link{ewas_result}
-objects) or by enrichment significance (for \link{ewas_enrichment} objects).
+Draws a word cloud of trait terms sized by association frequency (for
+\link{ewas_result} objects) or by enrichment significance (for
+\link{ewas_enrichment} objects), or of eQTM genes sized by their strongest
+association (for \link[=ewas_eqtm-class]{ewas_eqtm} objects).
 }

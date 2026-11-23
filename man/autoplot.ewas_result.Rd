@@ -8,6 +8,12 @@
   object,
   type = c("traits", "chromosome", "direction"),
   top_n = 15L,
+  colors = NULL,
+  title = NULL,
+  subtitle = NULL,
+  base_size = 11,
+  theme = ggplot2::theme_minimal,
+  wrap = 40,
   ...
 )
 }
@@ -18,8 +24,22 @@
 (probes per chromosome), or \code{"direction"} (hyper-/hypomethylation
 balance).}
 
-\item{top_n}{Number of categories to show for \code{type = "traits"} or
-\code{type = "chromosome"}.}
+\item{top_n}{Number of categories to show for \code{type = "traits"}.}
+
+\item{colors}{Colours to use. For single-colour plots the first colour
+is used. For \code{type = "direction"}, a vector named \code{pos} and \code{neg} (or
+two unnamed colours in that order).}
+
+\item{title, subtitle}{Plot title and subtitle. \code{NULL} (default) uses the
+built-in title; \code{NA} or \code{""} removes it.}
+
+\item{base_size}{Base font size passed to \code{theme}.}
+
+\item{theme}{A ggplot2 theme function such as \code{\link[ggplot2:theme_bw]{ggplot2::theme_bw()}}
+(called with \code{base_size}), or a complete theme object.}
+
+\item{wrap}{Wrap long category labels at this many characters; \code{NULL}
+to disable wrapping.}
 
 \item{...}{Unused.}
 }
@@ -27,5 +47,7 @@ balance).}
 A \code{ggplot} object.
 }
 \description{
-Plot summary statistics for an EWAS Atlas query result
+All EWAScaller plots return ordinary \code{ggplot} objects, so they can be
+extended further with \code{+}. The arguments below cover the common
+adjustments and are shared by every \code{autoplot()} method in the package.
 }
