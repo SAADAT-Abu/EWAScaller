@@ -1,4 +1,4 @@
-# EWAScaller (development version)
+# EWAScaller 0.2.0
 
 * New `ewas_eqtm()` finds expression quantitative trait methylation (eQTM)
   pairs: CpG-gene correlations between methylation and expression in TCGA

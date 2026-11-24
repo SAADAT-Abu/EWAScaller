@@ -1,6 +1,6 @@
 Package: EWAScaller
 Title: Query and Analyse the 'EWAS Atlas' Database
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Saadat", "Abu", email = "saadatabu1996@gmail.com", role = c("aut", "cre"))
 Description: Provides a client for the 'EWAS Atlas' web services
     (<https://ngdc.cncb.ac.cn/ewas/>; Li et al. (2019)
