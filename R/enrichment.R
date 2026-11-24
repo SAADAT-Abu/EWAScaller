@@ -22,10 +22,18 @@
 #'   replicate probes are merged.
 #' @param background The array the probes were selected from: `"450K"`
 #'   (the default), `"850K"` (EPIC v1), `"EPICv2"`, or a character vector of
-#'   probe identifiers to use as a custom background set. EWAS Atlas has no
-#'   EPIC v2 background, so `"EPICv2"` uses the EPIC/850K background; this
-#'   is an approximation because that background also contains EPIC v1
-#'   probes that are not on EPIC v2.
+#'   probe identifiers to use as a custom background set.
+#'
+#'   EWAS Atlas has no EPIC v2 background, so `"EPICv2"` uses the EPIC/850K
+#'   background. Because the toolkit rejects a job containing any probe
+#'   outside its background, probes that are not on both EPIC v1 and EPIC
+#'   v2 (mainly the ~200,000 probes new on EPIC v2, which have no EWAS Atlas
+#'   data) are dropped before submission, with a message; they are listed
+#'   in the result's `excluded` element. Genomic location, GO, and KEGG
+#'   p-values are approximate with `"EPICv2"` because the 850K background
+#'   also contains EPIC v1 probes that are not on EPIC v2; trait enrichment
+#'   does not depend on the background. Input probes that are missing from
+#'   a custom background are dropped in the same way.
 #' @param types Character vector of analyses to run: any of `"trait"`
 #'   (EWAS Atlas trait-term enrichment), `"genomic_location"` (enrichment
 #'   across gene/CpG-island-relative locations), `"gene_ontology"` (GO term
@@ -52,9 +60,10 @@
 #' @export
 ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "trait",
                              poll_interval = 5, timeout = 300, progress = interactive()) {
-  probes <- .prepare_toolkit_probes(probes)
   types <- match.arg(types, choices = names(.enrichment_files), several.ok = TRUE)
   bk <- .resolve_background(background)
+  prep <- .prepare_toolkit_probes(probes, bk)
+  probes <- prep$probes
   job <- .submit_toolkit_job(probes, bk$string)
 
   results <- list()
@@ -72,14 +81,20 @@ ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "tra
 
   new_ewas_enrichment(
     results = results, job = job, probes = probes,
-    background = bk$label, failed = failed
+    background = bk$label, failed = failed, excluded = prep$excluded
   )
 }
 
 #' Validate a probe set for submission to the EWAS Atlas toolkit
+#'
+#' @param probes Input probe identifiers.
+#' @param bk A resolved background from `.resolve_background()`. When it has
+#'   a `keep` set, probes outside it are dropped, because the toolkit
+#'   rejects the whole job if any input probe is not in the background.
+#' @return `list(probes = <chr>, excluded = <chr>)`.
 #' @keywords internal
 #' @noRd
-.prepare_toolkit_probes <- function(probes) {
+.prepare_toolkit_probes <- function(probes, bk = NULL) {
   probes <- unique(.normalize_probe_ids(probes))
   probes <- probes[!is.na(probes) & nzchar(probes)]
   invalid <- probes[!.is_valid_probe_id(probes)]
@@ -89,13 +104,30 @@ ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "tra
     ), call. = FALSE)
     probes <- setdiff(probes, invalid)
   }
+
+  excluded <- character()
+  if (!is.null(bk$keep)) {
+    excluded <- probes[!probes %in% bk$keep]
+    if (length(excluded) > 0) {
+      message(sprintf(
+        "EWAScaller: dropped %d probe(s) not in the %s (e.g. %s); see `$excluded`.",
+        length(excluded), bk$keep_desc, paste(utils::head(excluded, 3), collapse = ", ")
+      ))
+      probes <- probes[probes %in% bk$keep]
+    }
+  }
+
   if (length(probes) < 20) {
-    stop("The EWAS Atlas toolkit requires at least 20 valid probe identifiers.", call. = FALSE)
+    stop(sprintf(
+      "The EWAS Atlas toolkit requires at least 20 valid probe identifiers (%d left%s).",
+      length(probes),
+      if (length(excluded) > 0) sprintf(" after dropping %d not in the %s", length(excluded), bk$keep_desc) else ""
+    ), call. = FALSE)
   }
   if (length(probes) > 5000) {
     stop("The EWAS Atlas toolkit accepts at most 5000 probe identifiers.", call. = FALSE)
   }
-  probes
+  list(probes = probes, excluded = excluded)
 }
 
 #' Turn a `background` argument into the toolkit's string and a label
@@ -108,9 +140,12 @@ ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "tra
     message(
       "EWAScaller: EWAS Atlas has no EPIC v2 background, so the EPIC/850K ",
       "background is used instead. It includes EPIC v1 probes that are not on ",
-      "EPIC v2, so p-values are approximate."
+      "EPIC v2, so genomic location, GO, and KEGG p-values are approximate."
     )
-    return(list(string = "850K", label = "EPICv2 (approximated by 850K)"))
+    return(list(
+      string = "850K", label = "EPICv2 (approximated by 850K)",
+      keep = epic_v1v2_probes, keep_desc = "EPIC v1/v2 overlap, i.e. EPIC v2-only probes with no EWAS Atlas data"
+    ))
   }
   if (length(background) > 1 || !background[1] %in% c("450K", "850K")) {
     custom <- unique(.normalize_probe_ids(background, verbose = FALSE))
@@ -118,7 +153,8 @@ ewas_enrichment <- function(probes, background = c("450K", "850K"), types = "tra
     if (length(custom) < 20) {
       stop("A custom `background` must contain at least 20 probe identifiers.", call. = FALSE)
     }
-    return(list(string = paste(custom, collapse = "\n"), label = "other"))
+    return(list(string = paste(custom, collapse = "\n"), label = "other",
+                keep = custom, keep_desc = "custom background"))
   }
   list(string = background[1], label = background[1])
 }

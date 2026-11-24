@@ -86,13 +86,16 @@ such as `cg05575921_BC21` are accepted by every function and converted to
 `cg05575921`; replicate EPIC v2 probes are merged into one. For enrichment
 and eQTM analyses, set `background = "EPICv2"`. EWAS Atlas has no EPIC v2
 background, so the EPIC/850K background is used instead; it also contains
-EPIC v1 probes that are not on EPIC v2, so p-values are approximate.
-Probes that are new on EPIC v2 have no EWAS Atlas data and cannot be
-looked up.
+EPIC v1 probes that are not on EPIC v2, so genomic location, GO, and KEGG
+p-values are approximate (trait enrichment does not depend on the
+background). Probes that are new on EPIC v2 have no EWAS Atlas data, and
+the toolkit rejects a job containing any of them, so they are dropped
+before submission and listed in the result's `excluded` element.
 
 ```{r}
 v2_probes <- paste0(probes, "_BC21")
 enr_v2 <- ewas_enrichment(v2_probes, background = "EPICv2")
+enr_v2$excluded  # EPIC v2-only probes that were dropped
 ```
 
 ## eQTM: CpG methylation vs gene expression

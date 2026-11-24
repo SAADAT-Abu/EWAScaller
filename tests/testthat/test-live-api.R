@@ -68,3 +68,21 @@ test_that("ewas_eqtm and eqtm_samples return live CpG-gene expression data", {
   expect_true(nrow(s) > 10)
   expect_true(all(s$methylation >= 0 & s$methylation <= 1, na.rm = TRUE))
 })
+
+test_that("EPICv2 enrichment drops EPIC v2-only probes so the toolkit accepts the job", {
+  skip_if_offline()
+  # 20 probes on both EPIC v1 and v2 (as EPIC v2 names), plus one probe
+  # that is only on EPIC v2, which the toolkit would otherwise reject.
+  probes <- paste0(c(
+    "cg05575921", "cg00240195", "cg16419584", "cg03636183", "cg21566642",
+    "cg23771366", "cg19859270", "cg00382138", "cg25648203", "cg01940273",
+    "cg00401753", "cg00300637", "cg12803068", "cg09935388", "cg01899089",
+    "cg04180046", "cg02228185", "cg09338374", "cg19572487", "cg25189904"
+  ), "_BC21")
+  probes <- c(probes, "cg06161738_TC11")
+  enr <- suppressMessages(ewas_enrichment(probes, background = "EPICv2", types = "trait",
+                                          poll_interval = 3, timeout = 300, progress = FALSE))
+  expect_identical(enr$excluded, "cg06161738")
+  expect_length(enr$probes, 20)
+  expect_true(nrow(enr$results$trait) > 0)
+})

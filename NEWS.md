@@ -9,7 +9,11 @@
 * EPIC v2 support: EPIC v2 probe names (e.g. `cg05575921_BC21`) are
   converted to their 450K/EPIC v1 names everywhere, and enrichment/eQTM
   accept `background = "EPICv2"`, which uses the EPIC/850K background as an
-  approximation because EWAS Atlas has no EPIC v2 background.
+  approximation because EWAS Atlas has no EPIC v2 background. Probes that
+  are only on EPIC v2 (which the toolkit would reject) are dropped
+  automatically using a bundled list of probes on both EPIC v1 and v2, and
+  reported in the result's new `excluded` element. Input probes missing
+  from a custom background are dropped the same way.
 * Non-CpG `ch.*` probe names (e.g. `ch.4.37949012R`) are no longer
   rejected as invalid.
 * Word clouds with few words now use a larger font by default.

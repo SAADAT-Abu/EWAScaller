@@ -69,9 +69,11 @@ Things to know:
   EPIC v2, so genomic location, GO, and KEGG p-values are approximate
   (trait enrichment is unaffected).
 - Probes that are only on EPIC v2 (about 200,000 of them) have no EWAS
-  Atlas data. The toolkit rejects a whole enrichment or eQTM job if the
-  probe list contains one, with an error naming it (e.g.
-  `cg06161738 not in 850K`); remove those probes and resubmit.
+  Atlas data, and the toolkit would reject the whole job if the list
+  contained one. EWAScaller therefore drops them automatically before
+  submitting, using a bundled list of the 721,378 probes on both EPIC v1
+  and EPIC v2, and tells you how many it dropped. They are kept in
+  `enr$excluded` (or `eq$excluded`). At least 20 probes must remain.
 
 ### eQTM: CpG methylation vs gene expression
 

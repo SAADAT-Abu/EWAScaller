@@ -39,8 +39,9 @@
 #' @export
 ewas_eqtm <- function(probes, background = c("450K", "850K"),
                       poll_interval = 5, timeout = 300, progress = interactive()) {
-  probes <- .prepare_toolkit_probes(probes)
   bk <- .resolve_background(background)
+  prep <- .prepare_toolkit_probes(probes, bk)
+  probes <- prep$probes
   job <- .submit_toolkit_job(probes, bk$string)
 
   if (isTRUE(progress)) message("EWAScaller: running eQTM (expression regulation) analysis...")
@@ -50,7 +51,8 @@ ewas_eqtm <- function(probes, background = c("450K", "850K"),
     stop(sprintf("eQTM analysis failed: %s", out$message), call. = FALSE)
   }
 
-  new_ewas_eqtm(.tidy_eqtm_pairs(out$data), job = job, probes = probes, background = bk$label)
+  new_ewas_eqtm(.tidy_eqtm_pairs(out$data), job = job, probes = probes, background = bk$label,
+                excluded = prep$excluded)
 }
 
 #' @keywords internal
@@ -96,12 +98,14 @@ ewas_eqtm <- function(probes, background = c("450K", "850K"),
 #'     `p`; see [ewas_eqtm()] for its columns.}
 #'   \item{job}{The EWAS Atlas toolkit job identifier.}
 #'   \item{probes}{The probe identifiers submitted.}
-#'   \item{background}{The background set used (`"450K"`, `"850K"`, or
-#'     `"other"`).}
+#'   \item{background}{The background set used (`"450K"`, `"850K"`,
+#'     `"EPICv2 (approximated by 850K)"`, or `"other"`).}
+#'   \item{excluded}{Input probes dropped because they are not in the
+#'     background (see the `background` argument of [ewas_enrichment()]).}
 #' }
 #'
 #' @return An object of class `ewas_eqtm`: a named list with the `pairs`,
-#'   `job`, `probes`, and `background` elements described above.
+#'   `job`, `probes`, `background`, and `excluded` elements described above.
 #'   `summary.ewas_eqtm()` invisibly returns a list of summary tables
 #'   (after printing them), and `as.data.frame.ewas_eqtm()` returns the
 #'   `pairs` data frame.
@@ -111,9 +115,9 @@ NULL
 
 #' @keywords internal
 #' @noRd
-new_ewas_eqtm <- function(pairs, job, probes, background) {
+new_ewas_eqtm <- function(pairs, job, probes, background, excluded = character()) {
   structure(
-    list(pairs = pairs, job = job, probes = probes, background = background),
+    list(pairs = pairs, job = job, probes = probes, background = background, excluded = excluded),
     class = "ewas_eqtm"
   )
 }
@@ -126,6 +130,9 @@ print.ewas_eqtm <- function(x, ...) {
   cat(sprintf("  Background: %s\n", x$background))
   cat(sprintf("  Probes:     %d submitted, %d with an eQTM\n",
               length(x$probes), length(unique(pr$probeId))))
+  if (length(x$excluded) > 0) {
+    cat(sprintf("  Excluded:   %d probe(s) not in the background (see $excluded)\n", length(x$excluded)))
+  }
   cat(sprintf("  Pairs:      %d (%d gene(s), %d tissue(s))\n",
               nrow(pr), length(unique(pr$gene_id)), length(unique(pr$tissue))))
   invisible(x)

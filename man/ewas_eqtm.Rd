@@ -17,10 +17,18 @@ ewas_eqtm(
 
 \item{background}{The array the probes were selected from: \code{"450K"}
 (the default), \code{"850K"} (EPIC v1), \code{"EPICv2"}, or a character vector of
-probe identifiers to use as a custom background set. EWAS Atlas has no
-EPIC v2 background, so \code{"EPICv2"} uses the EPIC/850K background; this
-is an approximation because that background also contains EPIC v1
-probes that are not on EPIC v2.}
+probe identifiers to use as a custom background set.
+
+EWAS Atlas has no EPIC v2 background, so \code{"EPICv2"} uses the EPIC/850K
+background. Because the toolkit rejects a job containing any probe
+outside its background, probes that are not on both EPIC v1 and EPIC
+v2 (mainly the ~200,000 probes new on EPIC v2, which have no EWAS Atlas
+data) are dropped before submission, with a message; they are listed
+in the result's \code{excluded} element. Genomic location, GO, and KEGG
+p-values are approximate with \code{"EPICv2"} because the 850K background
+also contains EPIC v1 probes that are not on EPIC v2; trait enrichment
+does not depend on the background. Input probes that are missing from
+a custom background are dropped in the same way.}
 
 \item{poll_interval}{Seconds between job-status polls.}
 

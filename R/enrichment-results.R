@@ -8,14 +8,16 @@
 #'     type (e.g. `results$trait`).}
 #'   \item{job}{The EWAS Atlas toolkit job identifier.}
 #'   \item{probes}{The probe identifiers submitted.}
-#'   \item{background}{The background set used (`"450K"`, `"850K"`, or
-#'     `"other"`).}
+#'   \item{background}{The background set used (`"450K"`, `"850K"`,
+#'     `"EPICv2 (approximated by 850K)"`, or `"other"`).}
 #'   \item{failed}{Named list of analysis types that could not be
 #'     retrieved, with an explanatory message.}
+#'   \item{excluded}{Input probes dropped because they are not in the
+#'     background (see the `background` argument of [ewas_enrichment()]).}
 #' }
 #'
 #' @return An object of class `ewas_enrichment`: a named list with the
-#'   `results`, `job`, `probes`, `background`, and `failed` elements
+#'   `results`, `job`, `probes`, `background`, `failed`, and `excluded` elements
 #'   described above. `summary.ewas_enrichment()` invisibly returns the
 #'   object it was called on (after printing a summary), and
 #'   `as.data.frame.ewas_enrichment()` returns the requested analysis's
@@ -26,9 +28,10 @@ NULL
 
 #' @keywords internal
 #' @noRd
-new_ewas_enrichment <- function(results, job, probes, background, failed) {
+new_ewas_enrichment <- function(results, job, probes, background, failed, excluded = character()) {
   structure(
-    list(results = results, job = job, probes = probes, background = background, failed = failed),
+    list(results = results, job = job, probes = probes, background = background,
+         failed = failed, excluded = excluded),
     class = "ewas_enrichment"
   )
 }
@@ -39,6 +42,9 @@ print.ewas_enrichment <- function(x, ...) {
   cat(sprintf("  Job:        %s\n", x$job))
   cat(sprintf("  Background: %s\n", x$background))
   cat(sprintf("  Probes:     %d\n", length(x$probes)))
+  if (length(x$excluded) > 0) {
+    cat(sprintf("  Excluded:   %d probe(s) not in the background (see $excluded)\n", length(x$excluded)))
+  }
   for (nm in names(x$results)) {
     cat(sprintf("  %-18s %d row(s)\n", nm, nrow(x$results[[nm]])))
   }

@@ -25,7 +25,7 @@
 }
 \value{
 An object of class \code{ewas_enrichment}: a named list with the
-\code{results}, \code{job}, \code{probes}, \code{background}, and \code{failed} elements
+\code{results}, \code{job}, \code{probes}, \code{background}, \code{failed}, and \code{excluded} elements
 described above. \code{summary.ewas_enrichment()} invisibly returns the
 object it was called on (after printing a summary), and
 \code{as.data.frame.ewas_enrichment()} returns the requested analysis's
@@ -41,10 +41,12 @@ An \code{ewas_enrichment} bundles the analyses run by \code{\link[=ewas_enrichme
 type (e.g. \code{results$trait}).}
 \item{job}{The EWAS Atlas toolkit job identifier.}
 \item{probes}{The probe identifiers submitted.}
-\item{background}{The background set used (\code{"450K"}, \code{"850K"}, or
-\code{"other"}).}
+\item{background}{The background set used (\code{"450K"}, \code{"850K"},
+\code{"EPICv2 (approximated by 850K)"}, or \code{"other"}).}
 \item{failed}{Named list of analysis types that could not be
 retrieved, with an explanatory message.}
+\item{excluded}{Input probes dropped because they are not in the
+background (see the \code{background} argument of \code{\link[=ewas_enrichment]{ewas_enrichment()}}).}
 }
 }
 

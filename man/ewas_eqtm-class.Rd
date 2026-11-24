@@ -23,7 +23,7 @@
 }
 \value{
 An object of class \code{ewas_eqtm}: a named list with the \code{pairs},
-\code{job}, \code{probes}, and \code{background} elements described above.
+\code{job}, \code{probes}, \code{background}, and \code{excluded} elements described above.
 \code{summary.ewas_eqtm()} invisibly returns a list of summary tables
 (after printing them), and \code{as.data.frame.ewas_eqtm()} returns the
 \code{pairs} data frame.
@@ -39,8 +39,10 @@ An \code{ewas_eqtm} holds the CpG-gene expression correlations returned by
 \code{p}; see \code{\link[=ewas_eqtm]{ewas_eqtm()}} for its columns.}
 \item{job}{The EWAS Atlas toolkit job identifier.}
 \item{probes}{The probe identifiers submitted.}
-\item{background}{The background set used (\code{"450K"}, \code{"850K"}, or
-\code{"other"}).}
+\item{background}{The background set used (\code{"450K"}, \code{"850K"},
+\code{"EPICv2 (approximated by 850K)"}, or \code{"other"}).}
+\item{excluded}{Input probes dropped because they are not in the
+background (see the \code{background} argument of \code{\link[=ewas_enrichment]{ewas_enrichment()}}).}
 }
 }
 
