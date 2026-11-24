@@ -14,7 +14,7 @@ Description: Provides a client for the 'EWAS Atlas' web services
     expression in 'TCGA' (The Cancer Genome Atlas) tissue data. Query
     functions support concurrent, rate-limited requests to the remote
     service. Results are returned as tidy data frames with dedicated
-    summary and customisable plotting methods, including word clouds of
+    summary and customizable plotting methods, including word clouds of
     enriched 'EWAS Atlas' trait terms and eQTM heatmap, volcano, and
     scatter plots.
 License: MIT + file LICENSE

@@ -16,11 +16,17 @@ changes (see NEWS.md for the full list):
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 0 notes (local)
+
+On win-builder the only NOTE is the CRAN incoming spell check flagging
+"eQTM" and "methylation" in DESCRIPTION. Both are correct technical
+terms: "methylation" is DNA methylation, and "eQTM" (expression
+quantitative trait methylation) is spelled out where it is first used.
 
 ## Test environments
 
 * Fedora Linux 44, R 4.6.2 (local, `R CMD check --as-cran`)
+* win-builder, R-devel (2026-11-17 r90926 ucrt): 1 NOTE (spelling, above)
 
 ## Reverse dependencies
 
